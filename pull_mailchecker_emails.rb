@@ -26,6 +26,7 @@ remote_emails = [
   "https://raw.githubusercontent.com/disposable/disposable-email-domains/master/domains.txt"
 ].flat_map do |url|
   resp = Net::HTTP.get_response(URI.parse(url))
+  resp.value # raises on non-2xx, so an error page never ends up in the list
 
   resp.body.split("\n").flatten.map(&:downcase)
 end

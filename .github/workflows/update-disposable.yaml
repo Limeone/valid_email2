@@ -1,0 +1,29 @@
+name: update-disposable-domains
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+      - run: ruby pull_mailchecker_emails.rb
+      - run: bundle exec rake
+      - name: Commit and tag if the list changed
+        run: |
+          git diff --quiet && exit 0
+          version=$(ruby -r ./lib/valid_email2/version -e 'print ValidEmail2::VERSION')
+          tag="v${version}.$(date -u +%Y%m%d)"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "fix: update disposable email domains"
+          git tag "$tag"
+          git push origin HEAD "$tag"
